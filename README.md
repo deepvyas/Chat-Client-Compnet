@@ -7,7 +7,7 @@ A network based chat-client implemented as a part of Computer Networks(CS-F303) 
 
 The project consists of various small modules like:
 - [ ] Scratch-pad version having basic server-clients
-- [ ] Group(Chat-Room) part of the application
+- [ ] Group (Chat-Room) part of the application
 - [ ] Implementing Presence Protocol
-- [ ] Implementing other add-ons
+- [ ] Implementing message compression & encryption functionalities
 
