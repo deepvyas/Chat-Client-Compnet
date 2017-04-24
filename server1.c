@@ -1,5 +1,8 @@
+<<<<<<< HEAD
+#define _XOPEN_SOURCE 600
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -9,13 +12,18 @@
 
 char out_buff[1024];
 char in_buff[1024];
+int slave;
+int master;
+pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 void* readsock(void *socket){
 	int *socketfd;
 	socketfd=(int*)(socket);
 	int newsocket=*socketfd;
-	while(recv(newsocket,in_buff,1024*sizeof(char),0)){
+	while(1){
+		recv(newsocket,in_buff,1024*sizeof(char),0);
+		// printf("%s\n",in_buff);
 		printf("%s\n",in_buff);
-		fflush(stdout);
+		// fflush(slave);
 		memset(in_buff,0,1024*sizeof(char));
 	}
 }
@@ -24,8 +32,11 @@ void *writesock(void *socket){
 	int *socketfd;
 	socketfd=(int*)(socket);
 	int newsocket=*socketfd;
-	while(fgets(out_buff,1024,stdin)){
+	while(1){
+		fgets(out_buff,1024,stdin);
+		// printf("%s\n",out_buff);
 		send(newsocket,out_buff,strlen(out_buff),0);
+		sleep(0.2);
 		memset(out_buff,0,1024*sizeof(char));
 	}
 }
@@ -36,7 +47,7 @@ int main(int argc,char* argv[]){
 	struct sockaddr_in serverAddr,cliAddr;
 	socklen_t cli_size;
 	socketfd = socket(PF_INET,SOCK_STREAM,0);
-	bzero((char *)&serverAddr,sizeof serverAddr);
+	memset((char *)&serverAddr,0,sizeof serverAddr);
 	serverAddr.sin_family = AF_INET;
 	if(argc<2) fprintf(stderr,"No port provided.\n");
 	serverAddr.sin_port = htons(atoi(argv[1]));
@@ -55,12 +66,52 @@ int main(int argc,char* argv[]){
 		newsocket = accept(socketfd,(struct sockaddr*)&cliAddr,&cli_size);
 		int pid = fork();
 		if(pid==0){
-			pthread_t thread_read,thread_write;
-			pthread_create(&thread_read,NULL,readsock,(void*)&newsocket);
-			pthread_create(&thread_write,NULL,writesock,(void*)&newsocket);
-			pthread_detach(thread_read);
-			pthread_detach(thread_write);
-			break;
+			printf("\nConnection Request from : %s:%d\n Accept[y/n]?",inet_ntoa(cliAddr.sin_addr),ntohs(cliAddr.sin_port));
+			char opt;
+			scanf("%c",&opt);
+			if(opt!='y'&&opt!='n'){
+				printf("Incorrect option!!\nAccept[y/n]?");
+				while(opt!='y'&&opt!='n'){
+					scanf("%c",&opt);
+					printf("Incorrect option!!\nAccept[y/n]?");
+				}
+			}
+			if(opt=='n'){
+				break;
+			}
+			else if(opt=='y'){
+				master = posix_openpt(O_RDWR);
+				grantpt(master);
+				unlockpt(master);
+				char command[1000];
+				sprintf(command,"xterm -S%s/%d",strrchr(ptsname(master),'/')+1,master);
+				/*if(!fork()) {
+	   			execlp("xterm", "xterm", command, (char *)0);
+	    		_exit(1);
+	  		}*/
+	  		slave=open(ptsname(master), O_RDWR | O_NOCTTY);
+	  		FILE *xtermstdout = popen(command, "r");
+	  		dup2(slave, STDIN_FILENO);
+	  		dup2(slave, STDOUT_FILENO);
+	  		// printf("This appears in the terminal window.\n");
+	  		fgets(command, sizeof command,stdin);
+	  		// printf("window: %s\n", command);
+				pthread_t thread_read,thread_write;
+				pthread_create(&thread_write,NULL,writesock,(void*)&newsocket);
+				pthread_create(&thread_read,NULL,readsock,(void*)&newsocket);
+				pthread_detach(thread_write);
+				/*while(recv(newsocket,in_buff,1024*sizeof(char),0)){
+					// printf("%s\n",in_buff);
+					in_buff[strlen(in_buff)+1]='\0';
+					in_buff[strlen(in_buff)+1]='\n';
+					puts(in_buff);
+					// fflush(slave);
+					// printf("PUTs to slave\n");
+					memset(in_buff,0,1024*sizeof(char));
+				}*/
+				pthread_detach(thread_read);
+				break;
+			}
 		}
 		else{
 			close(newsocket);

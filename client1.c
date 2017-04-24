@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-
 char out_buff[1024];
 char in_buff[1024];
 char handle[128];
