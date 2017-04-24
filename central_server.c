@@ -29,11 +29,13 @@ struct node* search(char a[])
 		} 
 	} 
 
-	return NULL:
+	return NULL;
 } 
 
 void insert_replace(struct node* x) 
 {
+	printf("inserting entry");
+
 	for(int i=0;i<table_size;i++) 
 	{
 		if(strcmp(user_table[i]->handle,x->handle)==0) 
@@ -60,6 +62,20 @@ void* readsock(void *socket){
 	}
 }
 
+int check_prefix(char t[],char p[]) 
+{
+	int i=0;
+
+	while(p[i] != '\0') 
+	{
+		if(p[i] != t[i]) 
+			return 1;
+		i++;
+	} 
+
+	return 0;
+} 
+
 void *server_sock(void *socket){
 
 	int *socketfd;
@@ -80,11 +96,11 @@ void *server_sock(void *socket){
 	        send(newsocket,out_buff,strlen(out_buff),0);
 	        strcpy(out_buff,"USER WITH GIVEN HANDLE NOT CURRENTLY ONLINE");
 	        send(newsocket,out_buff,strlen(out_buff),0);
-	        return;
+	        return NULL;
 	    }
 
 	    strcpy(out_buff,"1");									//status code 
-	    send(new_socket,out_buff,strlen(out_buff),0);
+	    send(newsocket,out_buff,strlen(out_buff),0);
 	    
 	    send(newsocket,temp->ip_addr,strlen(temp->ip_addr),0);        //send port number 
 	    send(newsocket,temp->port,strlen(temp->port),0);  //send IP address
