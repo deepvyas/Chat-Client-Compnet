@@ -53,7 +53,7 @@ int main(int argc,char* argv[]){
 	socketfd = socket(PF_INET,SOCK_STREAM,0);
 	memset((char *)&serverAddr,0,sizeof serverAddr);
 	socket_cs = socket(PF_INET,SOCK_STREAM,0);
-	bzero((char *)&cServerAddr,sizeof cServerAddr);
+	memset((char *)&cServerAddr,0,sizeof cServerAddr);
 	cServerAddr.sin_family = AF_INET;
 	serverAddr.sin_family = AF_INET;
 	if(argc<2) fprintf(stderr,"No port provided.\n");
@@ -76,8 +76,11 @@ int main(int argc,char* argv[]){
 
 	strcpy(out_buff,"add");
 	send(socket_cs,out_buff,strlen(out_buff),0);
+	sleep(0.5); 
 	send(socket_cs,handle,strlen(handle),0);
+	sleep(0.5); 
 	send(socket_cs,cs_addr,strlen(cs_addr),0);
+	sleep(0.5); 
 	send(socket_cs,argv[1],strlen(argv[1]),0);
 
 	close(socket_cs); 
@@ -98,7 +101,7 @@ int main(int argc,char* argv[]){
 		if(pid==0){
 			printf("\nConnection Request from : %s:%d\n Accept[y/n]?",inet_ntoa(cliAddr.sin_addr),ntohs(cliAddr.sin_port));
 			char opt;
-			scanf("%c",&opt);
+			scanf(" %c",&opt);
 			if(opt!='y'&&opt!='n'){
 				printf("Incorrect option!!\nAccept[y/n]?");
 				while(opt!='y'&&opt!='n'){
