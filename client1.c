@@ -158,17 +158,39 @@ int main(int argc,char* argv[]){
 	else if(uorg==3){
 		printf("Enter Handle of group you want to create.\n");
 		scanf("%s",handle_g);
-		strcpy(out_buff,"create_g");
+		strcpy(out_buff,"g_create");
 		send(socketfd,out_buff,strlen(out_buff),0);
 		sleep(0.5);
-		send(socketfd,handle_g,strlen(handle),0);
-		sleep(0.5);
 		recv(socketfd,in_buff,1024*sizeof(char),0);
-		if(strcmp(in_buff,"0")==0){
-			
+		if(strcmp(in_buff,"1")==0){
+			send(socketfd,handle_g,strlen(handle),0);
+			sleep(0.5);
+			memset(out_buff,'\0',sizeof out_buff);
+			int cs_addr[100];
+			printf("Enter your Group server ip address\n"); 
+			scanf("%s",cs_addr);
+			strcpy(out_buff,cs_addr);
+			send(socketfd,out_buff,strlen(out_buff),0);
+			sleep(0.5);
+			memset(out_buff,'\0',sizeof out_buff);
+			strcpy(out_buff,cs_addr);
+			int cs_port[100];
+			printf("Enter your Group server port\n");
+			scanf("%s",cs_port); 
+			send(socketfd,out_buff,strlen(out_buff),0);
+			sleep(0.5);
+			recv(socketfd,in_buff,1024*sizeof(char),0);
+			if(strcmp(in_buff,"0")==0){
+				printf("Group Name Taken!!\n");
+				exit(1);
+			}
+			else{
+				printf("Registered group name.\n");
+				/*Make a function for server*/
+			}
 		}
 		else{
-
+			printf("Some Error on Server Side!!!.\n");
 		}
 	}
 }

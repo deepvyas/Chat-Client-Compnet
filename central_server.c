@@ -158,24 +158,24 @@ void *server_sock(void *socket){
 			send(newsocket,out_buff,strlen(out_buff),0);
 			
 			struct node *temp = (struct node*)malloc(sizeof(struct node));
-	    
-	   		recv(newsocket,temp->handle,sizeof(temp->handle),0);            //receive handle
+   		recv(newsocket,temp->handle,sizeof(temp->handle),0);            //receive handle
 
-	    	printf("handle :%s\n",temp->handle); 
+    	printf("handle :%s\n",temp->handle); 
 
-	    	recv(newsocket,temp->ip_addr,sizeof(temp->ip_addr),0);            //receive port number
-    		recv(newsocket,temp->port,sizeof(temp->port),0);
+    	recv(newsocket,temp->ip_addr,sizeof(temp->ip_addr),0);            //receive port number
+  		recv(newsocket,temp->port,sizeof(temp->port),0);
 
-    		groups[gcount].leader.handle = temp->handle;
-    		groups[gcount].leader.ip_addr = temp->ip_addr;
-    		groups[gcount].leader.port = temp->port;
+  		groups[gcount].leader.handle = temp->handle;
+  		groups[gcount].leader.ip_addr = temp->ip_addr;
+  		groups[gcount].leader.port = temp->port;
 
-    		gcount++; // Increment Group Size
+
+  		gcount++; // Increment Group Size
 
 		}
 		else
 		{
-			strcpy(out_buff,"ERROR: Name already in use"); 
+			strcpy(out_buff,"0"); 
 			send(newsocket,out_buff,strlen(out_buff),0);
 		}
 	}
@@ -207,8 +207,7 @@ void *server_sock(void *socket){
 			send(newsocket,temp->ip_addr,strlen(temp->ip_addr),0);    //send port number 
 			sleep(0.5);  
 			send(newsocket,temp->port,strlen(temp->port),0);  //send IP address
-			sleep(0.5);  
-
+			sleep(0.5);
 		}
 		else
 		{
