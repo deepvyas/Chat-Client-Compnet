@@ -5,9 +5,4 @@ A network based chat-client implemented as a part of Computer Networks(CS-F303) 
 * Anuraag Bathula(2014A7PS139P) -- [local-man](https://github.com/local-man)
 * Deep Vyas(2014A7PS248P) -- [deepvyas](https://github.com/deepvyas)
 
-The project consists of various small modules like:
-- [ ] Scratch-pad version having basic server-clients
-- [ ] Group (Chat-Room) part of the application
-- [ ] Implementing Presence Protocol
-- [ ] Implementing message compression & encryption functionalities
 
