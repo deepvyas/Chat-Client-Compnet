@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+
+int u_sock[256];
+int nou=0;
 char out_buff[1024];
 char in_buff[1024];
 char handle[128];
@@ -35,6 +38,36 @@ void *writesock(void *socket){
 	while(fgets(out_buff,1024,stdin)){
 		send(newsocket,out_buff,strlen(out_buff),0);
 		memset(out_buff,0,1024*sizeof(char));
+	}
+}
+
+void* readgsock(void *socket){
+	int *socketfd;
+	socketfd=(int*)(socket);
+	int newsocket=*socketfd;
+
+	while(recv(newsocket,in_buff,1024*sizeof(char),0)){
+
+		for(int i=0;i<nou;i++) 
+		{
+			if(u_sock[i] != newsocket) 
+				send(u_sock[i],in_buff,1024*sizeof(char),0); 
+		}
+		printf("%s",in_buff); 
+	}
+}
+
+void *writegsock(void *socket){
+	int *socketfd;
+	socketfd=(int*)(socket);
+	int newsocket=*socketfd;
+	while(fgets(out_buff,1024,stdin)){
+
+		for(int i=1;i<nou;i++) 
+		{
+				send(u_sock[i],in_buff,1024*sizeof(char),0); 
+		}
+
 	}
 }
 
@@ -160,34 +193,78 @@ int main(int argc,char* argv[]){
 		scanf("%s",handle_g);
 		strcpy(out_buff,"g_create");
 		send(socketfd,out_buff,strlen(out_buff),0);
-		sleep(0.5);
+		printf("before : %s",in_buff);
+		//sleep(0.5);
+		memset(in_buff,'\0',sizeof in_buff); 
+
 		recv(socketfd,in_buff,1024*sizeof(char),0);
+		printf("Here i am wwith status : %s\n",in_buff);
+
 		if(strcmp(in_buff,"1")==0){
-			send(socketfd,handle_g,strlen(handle),0);
+			printf("%s\n",handle_g); 
+			send(socketfd,handle_g,strlen(handle_g),0);
 			sleep(0.5);
-			memset(out_buff,'\0',sizeof out_buff);
-			int cs_addr[100];
-			printf("Enter your Group server ip address\n"); 
-			scanf("%s",cs_addr);
-			strcpy(out_buff,cs_addr);
-			send(socketfd,out_buff,strlen(out_buff),0);
-			sleep(0.5);
-			memset(out_buff,'\0',sizeof out_buff);
-			strcpy(out_buff,cs_addr);
-			int cs_port[100];
-			printf("Enter your Group server port\n");
-			scanf("%s",cs_port); 
-			send(socketfd,out_buff,strlen(out_buff),0);
-			sleep(0.5);
+
 			recv(socketfd,in_buff,1024*sizeof(char),0);
+			
 			if(strcmp(in_buff,"0")==0){
 				printf("Group Name Taken!!\n");
 				exit(1);
 			}
-			else{
-				printf("Registered group name.\n");
-				/*Make a function for server*/
+
+			printf("hello--%s",in_buff); 
+			
+			memset(out_buff,'\0',sizeof out_buff);
+			char cs_addr[100];
+			printf("Enter your Group server ip address\n"); 
+			scanf("%s",cs_addr);
+			//strcpy(out_buff,cs_addr);
+			send(socketfd,cs_addr,sizeof cs_addr,0);
+			sleep(0.5);
+
+			memset(out_buff,'\0',sizeof out_buff);
+
+			char  cs_port[101];
+			printf("Enter your Group server port\n");
+			scanf("%s",cs_port); 
+			send(socketfd,cs_port,strlen(cs_port),0);
+			sleep(0.5);
+
+			struct sockaddr_in gserver,user_addr;
+			socklen_t g_size;
+			int gsocket;
+
+			gsocket = socket(PF_INET,SOCK_STREAM,0);
+			gserver.sin_family = AF_INET;
+			gserver.sin_port = htons(atoi(cs_port));
+			gserver.sin_addr.s_addr = INADDR_ANY;
+
+			if(bind(gsocket,(struct sockaddr*)&gserver,sizeof gserver))
+			{
+				fprintf(stderr,"Error binding socket.\n");
+				exit(1);
 			}
+
+			if(listen(gsocket,5)!=0) 
+			{
+				fprintf(stderr,"Error making socket passive.\n");
+				exit(1); 
+			}
+
+			while(1)
+			{
+				g_size = sizeof user_addr;
+				u_sock[nou] = accept(gsocket, (struct sockaddr*)&user_addr, &g_size);
+
+				pthread_t t1,t2;
+				pthread_create(&t1, NULL, readgsock, (void*)&u_sock[nou]);
+				pthread_create(&t2, NULL, writegsock, (void*)&u_sock[nou]);
+				pthread_detach(t1);
+				pthread_detach(t2); 
+
+				nou++;
+			} 
+			
 		}
 		else{
 			printf("Some Error on Server Side!!!.\n");

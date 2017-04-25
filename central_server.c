@@ -85,8 +85,9 @@ int check_prefix(char t[],char p[])
 		if(p[i] != t[i]) return 1;
 		i++;
 	}
+
 	return 0;
-} 
+}
 
 void *server_sock(void *socket){
 
@@ -145,11 +146,16 @@ void *server_sock(void *socket){
 	else if (check_prefix(in_buff,"g_create") == 0)
 	{
 		//Generic Acknowledge
-		strcpy(out_buff,"1");
-		send(newsocket,out_buff,strlen(out_buff),0);
+		printf("I am in g_create : %s\n",in_buff); 
 
+		memset(out_buff,'\0',sizeof out_buff); 
+		strcpy(out_buff,"1");	
+		send(newsocket,out_buff,strlen(out_buff),0);
 		//Read in the name of the group
+		sleep(0.5);
+		memset(in_buff,'\0',sizeof in_buff);
 		recv(newsocket,in_buff,1024*sizeof(char),0);
+		printf("Handle recvd : %s\n",in_buff); 
 		int i,flag;
 		flag = 1;
 		 //Check if name already exists
@@ -166,16 +172,20 @@ void *server_sock(void *socket){
 			send(newsocket,out_buff,strlen(out_buff),0);
 			
 			struct node *temp = (struct node*)malloc(sizeof(struct node));
-   		recv(newsocket,temp->handle,sizeof(temp->handle),0);            //receive handle
-
-    	printf("handle :%s\n",temp->handle); 
-
-    	recv(newsocket,temp->ip_addr,sizeof(temp->ip_addr),0);            //receive port number
+		//	recv(newsocket,temp->handle,sizeof(temp->handle),0);            //receive handle
+		strcpy(temp->handle ,in_buff);
+    	printf("handle :%s\n",temp->handle);
+    	memset(in_buff,'\0',sizeof in_buff); 
+    	recv(newsocket,in_buff,sizeof(in_buff),0);
+    	strcpy(temp->ip_addr,in_buff);
+  		printf("Mujhe mil jana mangta but nahi mila"); 
+    	sleep(0.5); //receive port number
   		recv(newsocket,temp->port,sizeof(temp->port),0);
-
-  		groups[gcount].leader.handle = temp->handle;
-  		groups[gcount].leader.ip_addr = temp->ip_addr;
-  		groups[gcount].leader.port = temp->port;
+  		printf("Mujhe mil jana mangta but nahi mila"); 
+  		printf("IP : %s, port : %s",temp->ip_addr,temp->port); 
+  		strcpy(groups[gcount].leader.handle,temp->handle);
+  		strcpy(groups[gcount].leader.ip_addr,temp->ip_addr);
+  		strcpy(groups[gcount].leader.port,temp->port);
 
 
   		gcount++; // Increment Group Size
@@ -193,6 +203,7 @@ void *server_sock(void *socket){
 		strcpy(out_buff,"1");
 		send(newsocket,out_buff,strlen(out_buff),0);
 
+
 		//Read in the name of the group
 		recv(newsocket,in_buff,1024*sizeof(char),0);
 		int i,flag;
@@ -208,7 +219,7 @@ void *server_sock(void *socket){
 		}
 		if(flag)
 		{
-			struct * node temp = &(groups[i].leader);
+			struct node* temp = &(groups[i].leader);
 			strcpy(out_buff,"1");									//status code 
 			send(newsocket,out_buff,strlen(out_buff),0);
 			sleep(0.5);  
