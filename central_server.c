@@ -15,8 +15,19 @@ struct node
 	char handle[128];
 };
 
+struct group
+{
+	char name[128];
+	int curr;
+	struct node user_list[10];
+	struct node leader;
+};
+
 struct node* user_table[1024];
 int table_size = 0;
+
+struct group groups[1024];
+int gcount = 0;
 
 
 struct node* search(char a[])
@@ -110,15 +121,100 @@ void *server_sock(void *socket){
 		send(newsocket,temp->port,strlen(temp->port),0);  //send IP address
 		sleep(0.5);  
 	}
-	else if(strcmp(in_buff,"add")==0)
+	else if(check_prefix(in_buff,"add")==0){
+	    struct node *temp = (struct node*)malloc(sizeof(struct node));
+	    
+	    recv(newsocket,temp->handle,sizeof(temp->handle),0);            //receive handle
+
+	    printf("handle :%s\n",temp->handle); 
+
+	    recv(newsocket,temp->ip_addr,sizeof(temp->ip_addr),0);            //receive port number
+    	recv(newsocket,temp->port,sizeof(temp->port),0);            //receive IP address
+
+        insert_replace(temp);
+        printf("table size after insert: %d\n",table_size); 
+	}
+	else if (check_prefix(in_buff,"g_create") == 0)
 	{
-		struct node *temp = (struct node*)malloc(sizeof(struct node));
-		recv(newsocket,temp->handle,sizeof(temp->handle),0);            //receive handle
-		printf("handle :%s\n",temp->handle); 
-		recv(newsocket,temp->ip_addr,sizeof(temp->ip_addr),0);            //receive port number
-		recv(newsocket,temp->port,sizeof(temp->port),0);            //receive IP address
-		insert_replace(temp);
-		printf("table size after insert: %d\n",table_size); 
+		//Generic Acknowledge
+		strcpy(out_buff,"1");
+		send(newsocket,out_buff,strlen(out_buff),0);
+
+		//Read in the name of the group
+		recv(newsocket,in_buff,1024*sizeof(char),0);
+		int i,flag;
+		flag = 1;
+		 //Check if name already exists
+		for (i = 0; i < gcount; ++i)
+		{
+			if(strcmp(groups[i].name,in_buff) == 0)
+				flag = 0;
+		}
+
+		//Legit Name, send back postive acknowledge and add leader details
+		if (flag)
+		{
+			strcpy(out_buff,"1");
+			send(newsocket,out_buff,strlen(out_buff),0);
+			
+			struct node *temp = (struct node*)malloc(sizeof(struct node));
+	    
+	   		recv(newsocket,temp->handle,sizeof(temp->handle),0);            //receive handle
+
+	    	printf("handle :%s\n",temp->handle); 
+
+	    	recv(newsocket,temp->ip_addr,sizeof(temp->ip_addr),0);            //receive port number
+    		recv(newsocket,temp->port,sizeof(temp->port),0);
+
+    		groups[gcount].leader.handle = temp->handle;
+    		groups[gcount].leader.ip_addr = temp->ip_addr;
+    		groups[gcount].leader.port = temp->port;
+
+    		gcount++; // Increment Group Size
+
+		}
+		else
+		{
+			strcpy(out_buff,"ERROR: Name already in use"); 
+			send(newsocket,out_buff,strlen(out_buff),0);
+		}
+	}
+	else if (check_prefix(in_buff,"g_connect") == 0)
+	{
+		//Generic Acknowledge
+		strcpy(out_buff,"1");
+		send(newsocket,out_buff,strlen(out_buff),0);
+
+		//Read in the name of the group
+		recv(newsocket,in_buff,1024*sizeof(char),0);
+		int i,flag;
+		flag = 0;
+
+		for (i = 0; i < gcount; ++i)
+		{
+			if(strcmp(groups[i].name,in_buff) == 0)
+			{
+				flag = 1;
+				break;
+			}
+		}
+		if(flag)
+		{
+			struct * node temp = &(groups[i].leader);
+			strcpy(out_buff,"1");									//status code 
+			send(newsocket,out_buff,strlen(out_buff),0);
+			sleep(0.5);  
+			send(newsocket,temp->ip_addr,strlen(temp->ip_addr),0);    //send port number 
+			sleep(0.5);  
+			send(newsocket,temp->port,strlen(temp->port),0);  //send IP address
+			sleep(0.5);  
+
+		}
+		else
+		{
+			strcpy(out_buff,"ERROR: Name not found"); 
+			send(newsocket,out_buff,strlen(out_buff),0);
+		}
 	}
 	else
 	{
