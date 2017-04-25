@@ -79,6 +79,11 @@ int main(int argc,char* argv[]){
 	cServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1");	//write server add here
 
 
+	if(bind(socketfd,(struct sockaddr*)&serverAddr,sizeof serverAddr)<0){
+		fprintf(stderr,"Error binding socket.\n");
+		exit(1);
+	}
+
 	if(connect(socket_cs,(struct sockaddr*)&cServerAddr,sizeof cServerAddr )<0)
 	{
 		fprintf(stderr,"CANNOT CONNECT TO CENTRAL CHAT SERVER TO SEND CLOSURE..");
@@ -102,11 +107,6 @@ int main(int argc,char* argv[]){
 
 	close(socket_cs); 
 
-	if(bind(socketfd,(struct sockaddr*)&serverAddr,sizeof serverAddr)<0){
-		fprintf(stderr,"Error binding socket.\n");
-		exit(1);
-	}
-
 	if(listen(socketfd,5)!=0){
 		fprintf(stderr, "Error making socket passive.\n");
 		exit(1);
@@ -129,6 +129,8 @@ int main(int argc,char* argv[]){
 				}
 			}
 			if(opt=='n'){
+				char rej[5]="r";
+				send(newsocket,rej,strlen(rej),0);
 				break;
 			}
 			else if(opt=='y'){
