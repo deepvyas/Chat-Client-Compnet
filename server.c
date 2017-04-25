@@ -7,8 +7,7 @@
 #include <string.h>
 char out_buff[1024];
 char in_buff[1024];
-char users[10][100] = {"cat","dog","bull","sheep"};
-char pass[10][100] = {"meow","bhow","moun","maain"};
+
 int main(int argc,char* argv[]){
 	int socketfd,newsocket;
 	struct sockaddr_in serverAddr,cliAddr;

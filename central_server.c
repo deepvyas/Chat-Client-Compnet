@@ -30,11 +30,11 @@ struct node* search(char a[])
 		if(strcmp(user_table[i]->handle,a)==0) 
 	 	{
 			return user_table[i];
-		} 
-	} 
+		}
+	}
 
 	return NULL;
-} 
+}
 
 void insert_replace(struct node* x) 
 {
@@ -45,8 +45,8 @@ void insert_replace(struct node* x)
 		{
 			user_table[i] = x;
 			return;
-		} 
-	} 
+		}
+	}
 
 	user_table[table_size] = x;
 	table_size++;
@@ -91,9 +91,9 @@ void *server_sock(void *socket){
 	if(check_prefix(in_buff,"connect")==0)
 	{
 
+		memset(in_buff,'\0',sizeof(in_buff)); 
 	    recv(newsocket,in_buff,1024*sizeof(char),0);            //receive handle
 	    
-
 		printf("asking for socket!, table size : %d\n",table_size); 
 	    struct node* temp = search(in_buff);
 		printf("asking for socket!\n"); 
@@ -121,11 +121,15 @@ void *server_sock(void *socket){
 	{
 	    struct node *temp = (struct node*)malloc(sizeof(struct node));
 	    
+		memset(temp->handle,'\0',sizeof(temp->handle)); 
 	    recv(newsocket,temp->handle,sizeof(temp->handle),0);            //receive handle
 
 	    printf("handle :%s\n",temp->handle); 
 
+		memset(temp->ip_addr,'\0',sizeof(temp->ip_addr)); 
 	    recv(newsocket,temp->ip_addr,sizeof(temp->ip_addr),0);            //receive port number
+	    sleep(0.5); 
+		memset(temp->port,'\0',sizeof(temp->port)); 
     	recv(newsocket,temp->port,sizeof(temp->port),0);            //receive IP address
 
         insert_replace(temp);
@@ -170,7 +174,6 @@ int main(int argc,char* argv[]){
 			pthread_create(&thread_write,NULL,server_sock,(void*)&newsocket);
 //			pthread_detach(thread_read);
 			pthread_detach(thread_write);
-		
 	}
 	pthread_exit(0);
 }
