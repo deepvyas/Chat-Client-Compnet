@@ -85,7 +85,7 @@ void *server_sock(void *socket){
 	memset(in_buff,'\0',sizeof in_buff);
 	recv(newsocket,in_buff,1024*sizeof(char),0);
 	
-	if(check_prefix(in_buff,"connect")==0)
+	if(strcmp(in_buff,"connect")==0)
 	{
 		recv(newsocket,in_buff,1024*sizeof(char),0);            //receive handle
 		printf("asking for socket!, table size : %d\n",table_size); 
@@ -110,7 +110,7 @@ void *server_sock(void *socket){
 		send(newsocket,temp->port,strlen(temp->port),0);  //send IP address
 		sleep(0.5);  
 	}
-	else if(check_prefix(in_buff,"add")==0)
+	else if(strcmp(in_buff,"add")==0)
 	{
 		struct node *temp = (struct node*)malloc(sizeof(struct node));
 		recv(newsocket,temp->handle,sizeof(temp->handle),0);            //receive handle

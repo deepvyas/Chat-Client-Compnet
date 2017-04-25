@@ -61,7 +61,10 @@ int main(int argc,char* argv[]){
 	}
 	int uorg;
 	memset(handle,'\0',sizeof handle);
-	printf("---Welcome to CHAT CLIENT---\n\nEnter 1 if you want to connect to a user.\nEnter 2 if you want to connect to a group");
+	printf("---Welcome to CHAT CLIENT---\n\n");
+	printf("Enter 1 if you want to connect to a user.\n");
+	printf("Enter 2 if you want to connect to a group.\n");
+	printf("Enter 3 if you want to create a group.\n");
 	scanf("%d",&uorg);
 	if(uorg==1){
 		printf("Enter the handle to user who want to connect with :\n");
@@ -105,15 +108,13 @@ int main(int argc,char* argv[]){
 			pthread_exit(0);
 		}
 	}
-	else{
+	else if(uorg==2){
 		printf("Enter the name of the group you want to connect to:\n");
 		scanf("%s",handle_g);
 		strcpy(out_buff,"connect_g");
-		
 		send(socketfd,out_buff,strlen(out_buff),0);
 		sleep(0.5); 
 		send(socketfd,handle_g,strlen(handle_g),0);
-		
 		//Central Server sends back pass(1)or fail(0) status flags  "
 		recv(socketfd,in_buff,1024*sizeof(char),0);
 		if(strcmp(in_buff,"1")==0){
@@ -122,7 +123,6 @@ int main(int argc,char* argv[]){
 		else{
 			printf("Error: Not added to group\n");
 		}
-
 		recv(socketfd,in_buff,1024*sizeof(char),0);
 		printf("status code recvd %s\n",in_buff);
 		if(strcmp(in_buff,"0")==0)
@@ -153,6 +153,22 @@ int main(int argc,char* argv[]){
 			pthread_detach(thread_read);
 			pthread_detach(thread_write);
 			pthread_exit(0);
+		}
+	}
+	else if(uorg==3){
+		printf("Enter Handle of group you want to create.\n");
+		scanf("%s",handle_g);
+		strcpy(out_buff,"create_g");
+		send(socketfd,out_buff,strlen(out_buff),0);
+		sleep(0.5);
+		send(socketfd,handle_g,strlen(handle),0);
+		sleep(0.5);
+		recv(socketfd,in_buff,1024*sizeof(char),0);
+		if(strcmp(in_buff,"0")==0){
+			
+		}
+		else{
+
 		}
 	}
 }

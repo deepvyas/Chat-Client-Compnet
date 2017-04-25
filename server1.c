@@ -48,7 +48,6 @@ void *writesock(void *socket){
 }
 
 void intr_handler(){
-	printf("Please dont kill me\n");
 	if(connect(socket_cs,(struct sockaddr*)&cServerAddr,sizeof cServerAddr )<0)
 	{
 		fprintf(stderr,"CANNOT CONNECT TO CENTRAL CHAT SERVER");
@@ -77,8 +76,6 @@ int main(int argc,char* argv[]){
 	serverAddr.sin_addr.s_addr = INADDR_ANY;
 	cServerAddr.sin_port = htons(8000);
 	cServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1");	//write server add here
-
-
 	if(bind(socketfd,(struct sockaddr*)&serverAddr,sizeof serverAddr)<0){
 		fprintf(stderr,"Error binding socket.\n");
 		exit(1);
