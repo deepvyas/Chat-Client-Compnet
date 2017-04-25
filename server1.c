@@ -8,13 +8,19 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-
+#include <signal.h>
 char out_buff[1024];
 char in_buff[1024];
 int slave;
 int master;
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 char handle[128];
+
+int socket_cs;
+int socketfd,newsocket;
+struct sockaddr_in serverAddr,cliAddr,cServerAddr;
+
+
 void* readsock(void *socket){
 	int *socketfd;
 	socketfd=(int*)(socket);
@@ -41,11 +47,20 @@ void *writesock(void *socket){
 	}
 }
 
+void intr_handler(){
+	if(connect(socket_cs,(struct sockaddr*)&cServerAddr,sizeof cServerAddr )<0)
+	{
+		fprintf(stderr,"CANNOT CONNECT TO CENTRAL CHAT SERVER");
+	}
+	strcpy(out_buff,"sub");
+	send(socket_cs,handle,strlen(handle),0);
+	close(socket_cs);
+	pthread_exit(0);
+}
+
 int main(int argc,char* argv[]){
 	
-	int socket_cs;
-	int socketfd,newsocket;
-	struct sockaddr_in serverAddr,cliAddr,cServerAddr;
+	
 	char interface[] = "wlp3s0";
 	char cs_addr[128];
 
@@ -61,11 +76,15 @@ int main(int argc,char* argv[]){
 	serverAddr.sin_addr.s_addr = INADDR_ANY;
 	cServerAddr.sin_port = htons(8000);
 	cServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1");	//write server add here
-
+	if(bind(socketfd,(struct sockaddr*)&serverAddr,sizeof serverAddr)<0){
+		fprintf(stderr,"Error binding socket.\n");
+		exit(1);
+	}
 
 	if(connect(socket_cs,(struct sockaddr*)&cServerAddr,sizeof cServerAddr )<0)
 	{
-		fprintf(stderr,"CANNOT CONNECT TO CENTRAL CHAT SERVER");
+		fprintf(stderr,"CANNOT CONNECT TO CENTRAL CHAT SERVER TO SEND CLOSURE..");
+		pthread_exit(0);
 	}
 
 	printf("Enter your chat system handle\n");
@@ -85,16 +104,13 @@ int main(int argc,char* argv[]){
 
 	close(socket_cs); 
 
-	if(bind(socketfd,(struct sockaddr*)&serverAddr,sizeof serverAddr)<0){
-		fprintf(stderr,"Error binding socket.\n");
-		exit(1);
-	}
-	if(listen(socketfd,1)!=0){
+	if(listen(socketfd,5)!=0){
 		fprintf(stderr, "Error making socket passive.\n");
 		exit(1);
 	}
 
 	while(1){
+		signal(SIGINT,intr_handler);
 		cli_size = sizeof cliAddr;
 		newsocket = accept(socketfd,(struct sockaddr*)&cliAddr,&cli_size);
 		int pid = fork();
@@ -110,6 +126,8 @@ int main(int argc,char* argv[]){
 				}
 			}
 			if(opt=='n'){
+				char rej[5]="r";
+				send(newsocket,rej,strlen(rej),0);
 				break;
 			}
 			else if(opt=='y'){
@@ -150,6 +168,5 @@ int main(int argc,char* argv[]){
 			close(newsocket);
 		}
 	}
-
 	pthread_exit(0);
 }

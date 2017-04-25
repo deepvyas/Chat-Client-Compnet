@@ -10,13 +10,24 @@
 
 struct node
 {
-    char port[128];
-    char ip_addr[128];
-    char handle[128];
+	char port[128];
+	char ip_addr[128];
+	char handle[128];
+};
+
+struct group
+{
+	char name[128];
+	int curr;
+	struct node user_list[10];
+	struct node leader;
 };
 
 struct node* user_table[1024];
 int table_size = 0;
+
+struct group groups[1024];
+int gcount = 0;
 
 
 struct node* search(char a[])
@@ -28,7 +39,7 @@ struct node* search(char a[])
 		printf(":%s\n",user_table[i]->handle);
 
 		if(strcmp(user_table[i]->handle,a)==0) 
-	 	{
+		{
 			return user_table[i];
 		}
 	}
@@ -38,15 +49,14 @@ struct node* search(char a[])
 
 void insert_replace(struct node* x) 
 {
-
 	for(int i=0;i<table_size;i++) 
 	{
 		if(strcmp(user_table[i]->handle,x->handle)==0) 
 		{
 			user_table[i] = x;
 			return;
-		}
-	}
+		} 
+	} 
 
 	user_table[table_size] = x;
 	table_size++;
@@ -72,11 +82,9 @@ int check_prefix(char t[],char p[])
 
 	while(p[i] != '\0') 
 	{
-		if(p[i] != t[i]) 
-			return 1;
+		if(p[i] != t[i]) return 1;
 		i++;
-	} 
-
+	}
 	return 0;
 } 
 
@@ -86,39 +94,38 @@ void *server_sock(void *socket){
 	socketfd=(int*)(socket);
 	int newsocket=*socketfd;
 	
+	memset(in_buff,'\0',sizeof in_buff);
 	recv(newsocket,in_buff,1024*sizeof(char),0);
 	
-	if(check_prefix(in_buff,"connect")==0)
+	if(strcmp(in_buff,"connect")==0)
 	{
-
 		memset(in_buff,'\0',sizeof(in_buff)); 
 	    recv(newsocket,in_buff,1024*sizeof(char),0);            //receive handle
 	    
+
 		printf("asking for socket!, table size : %d\n",table_size); 
-	    struct node* temp = search(in_buff);
+		struct node* temp = search(in_buff);
 		printf("asking for socket!\n"); 
-		
-	    if(temp == NULL)
-	    {
-		    printf("%s\n",in_buff);
+	
+		if(temp == NULL)
+		{
+			printf("%s\n",in_buff);
+			strcpy(out_buff,"0");								//status code
+			send(newsocket,out_buff,strlen(out_buff),0);
+			strcpy(out_buff,"USER WITH GIVEN HANDLE NOT CURRENTLY ONLINE");
+			send(newsocket,out_buff,strlen(out_buff),0);
+			return NULL;
+		}
 
-	    	strcpy(out_buff,"0");								//status code
-	        send(newsocket,out_buff,strlen(out_buff),0);
-	        strcpy(out_buff,"USER WITH GIVEN HANDLE NOT CURRENTLY ONLINE");
-	        send(newsocket,out_buff,strlen(out_buff),0);
-	        return NULL;
-	    }
-
-	    strcpy(out_buff,"1");									//status code 
-	    send(newsocket,out_buff,strlen(out_buff),0);
+		strcpy(out_buff,"1");									//status code 
+		send(newsocket,out_buff,strlen(out_buff),0);
 		sleep(0.5);  
-	    send(newsocket,temp->ip_addr,strlen(temp->ip_addr),0);        //send port number 
+		send(newsocket,temp->ip_addr,strlen(temp->ip_addr),0);        //send port number 
 		sleep(0.5);  
-	    send(newsocket,temp->port,strlen(temp->port),0);  //send IP address
+		send(newsocket,temp->port,strlen(temp->port),0);  //send IP address
 		sleep(0.5);  
 	}
-	else if(check_prefix(in_buff,"add")==0)
-	{
+	else if(check_prefix(in_buff,"add")==0){
 	    struct node *temp = (struct node*)malloc(sizeof(struct node));
 	    
 		memset(temp->handle,'\0',sizeof(temp->handle)); 
@@ -135,15 +142,94 @@ void *server_sock(void *socket){
         insert_replace(temp);
         printf("table size after insert: %d\n",table_size); 
 	}
+	else if (check_prefix(in_buff,"g_create") == 0)
+	{
+		//Generic Acknowledge
+		strcpy(out_buff,"1");
+		send(newsocket,out_buff,strlen(out_buff),0);
+
+		//Read in the name of the group
+		recv(newsocket,in_buff,1024*sizeof(char),0);
+		int i,flag;
+		flag = 1;
+		 //Check if name already exists
+		for (i = 0; i < gcount; ++i)
+		{
+			if(strcmp(groups[i].name,in_buff) == 0)
+				flag = 0;
+		}
+
+		//Legit Name, send back postive acknowledge and add leader details
+		if (flag)
+		{
+			strcpy(out_buff,"1");
+			send(newsocket,out_buff,strlen(out_buff),0);
+			
+			struct node *temp = (struct node*)malloc(sizeof(struct node));
+   		recv(newsocket,temp->handle,sizeof(temp->handle),0);            //receive handle
+
+    	printf("handle :%s\n",temp->handle); 
+
+    	recv(newsocket,temp->ip_addr,sizeof(temp->ip_addr),0);            //receive port number
+  		recv(newsocket,temp->port,sizeof(temp->port),0);
+
+  		groups[gcount].leader.handle = temp->handle;
+  		groups[gcount].leader.ip_addr = temp->ip_addr;
+  		groups[gcount].leader.port = temp->port;
+
+
+  		gcount++; // Increment Group Size
+
+		}
+		else
+		{
+			strcpy(out_buff,"0"); 
+			send(newsocket,out_buff,strlen(out_buff),0);
+		}
+	}
+	else if (check_prefix(in_buff,"g_connect") == 0)
+	{
+		//Generic Acknowledge
+		strcpy(out_buff,"1");
+		send(newsocket,out_buff,strlen(out_buff),0);
+
+		//Read in the name of the group
+		recv(newsocket,in_buff,1024*sizeof(char),0);
+		int i,flag;
+		flag = 0;
+
+		for (i = 0; i < gcount; ++i)
+		{
+			if(strcmp(groups[i].name,in_buff) == 0)
+			{
+				flag = 1;
+				break;
+			}
+		}
+		if(flag)
+		{
+			struct * node temp = &(groups[i].leader);
+			strcpy(out_buff,"1");									//status code 
+			send(newsocket,out_buff,strlen(out_buff),0);
+			sleep(0.5);  
+			send(newsocket,temp->ip_addr,strlen(temp->ip_addr),0);    //send port number 
+			sleep(0.5);  
+			send(newsocket,temp->port,strlen(temp->port),0);  //send IP address
+			sleep(0.5);
+		}
+		else
+		{
+			strcpy(out_buff,"ERROR: Name not found"); 
+			send(newsocket,out_buff,strlen(out_buff),0);
+		}
+	}
 	else
 	{
-	    strcpy(out_buff,"ERROR: Request Format not recognizible"); 
-	    send(newsocket,out_buff,strlen(out_buff),0);
+		strcpy(out_buff,"ERROR: Request Format not recognizible"); 
+		send(newsocket,out_buff,strlen(out_buff),0);
 	}
-	
 	pthread_exit(0); 	
 }
-
 
 int main(int argc,char* argv[]){
 	int socketfd,newsocket;
@@ -169,11 +255,13 @@ int main(int argc,char* argv[]){
 		newsocket = accept(socketfd,(struct sockaddr*)&cliAddr,&cli_size);
 		//int pid = fork();
 		//if(pid==0)
+
 			pthread_t thread_read,thread_write;
 //			pthread_create(&thread_read,NULL,readsock,(void*)&newsocket);
 			pthread_create(&thread_write,NULL,server_sock,(void*)&newsocket);
 //			pthread_detach(thread_read);
 			pthread_detach(thread_write);
+
 	}
 	pthread_exit(0);
 }
