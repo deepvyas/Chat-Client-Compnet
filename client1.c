@@ -47,8 +47,7 @@ int main(int argc,char* argv[]){
 	serverAddr.sin_family = AF_INET;
 	userAddr.sin_family = AF_INET;
 
-	// if(argc<3) fprintf(stderr,"No port provided.\n");
-
+	//if(argc<2) fprintf(stderr,"No port provided.\n");
 	serverAddr.sin_port = htons(8000);
 	serverAddr.sin_addr.s_addr= inet_addr("127.0.0.1");
 	userAddr.sin_addr.s_addr = inet_addr(argv[1]); 
@@ -63,8 +62,11 @@ int main(int argc,char* argv[]){
 
 	strcpy(out_buff,"connect");
 	send(socketfd,out_buff,strlen(out_buff),0);
+	sleep(0.5); 
 	send(socketfd,handle,strlen(handle),0);
 	recv(socketfd,in_buff,1024*sizeof(char),0);
+
+	printf("status code recvd %s\n",in_buff);
 
 	if(strcmp(in_buff,"0")==0)
 	{
@@ -74,7 +76,11 @@ int main(int argc,char* argv[]){
 	else
 	{
 		recv(socketfd,user_ip,128*sizeof(char),0);
+		sleep(0.5); 
 		recv(socketfd,user_port,128*sizeof(char),0);
+
+		printf("Socket recvd\n");
+		printf("%s %s\n",user_ip,user_port);
 
 		userAddr.sin_addr.s_addr = inet_addr(user_ip); 
 		userAddr.sin_port = htons(atoi(user_port)); 	

@@ -21,10 +21,14 @@ int table_size = 0;
 
 struct node* search(char a[])
 {
+	printf("%d\n",table_size); 
+
 	for(int i=0;i<table_size;i++) 
 	{
+		printf(":%s\n",user_table[i]->handle);
+
 		if(strcmp(user_table[i]->handle,a)==0) 
-		{
+	 	{
 			return user_table[i];
 		} 
 	} 
@@ -34,7 +38,6 @@ struct node* search(char a[])
 
 void insert_replace(struct node* x) 
 {
-	printf("inserting entry");
 
 	for(int i=0;i<table_size;i++) 
 	{
@@ -47,7 +50,8 @@ void insert_replace(struct node* x)
 
 	user_table[table_size] = x;
 	table_size++;
-} 
+	printf("inserting entry %d",table_size);
+}
 
 char out_buff[1024];
 char in_buff[1024];
@@ -86,12 +90,18 @@ void *server_sock(void *socket){
 	
 	if(check_prefix(in_buff,"connect")==0)
 	{
+
 	    recv(newsocket,in_buff,1024*sizeof(char),0);            //receive handle
 	    
+
+		printf("asking for socket!, table size : %d\n",table_size); 
 	    struct node* temp = search(in_buff);
-	    
+		printf("asking for socket!\n"); 
+		
 	    if(temp == NULL)
 	    {
+		    printf("%s\n",in_buff);
+
 	    	strcpy(out_buff,"0");								//status code
         send(newsocket,out_buff,strlen(out_buff),0);
         strcpy(out_buff,"USER WITH GIVEN HANDLE NOT CURRENTLY ONLINE");
@@ -101,25 +111,32 @@ void *server_sock(void *socket){
 
 	    strcpy(out_buff,"1");									//status code 
 	    send(newsocket,out_buff,strlen(out_buff),0);
-	    
+		sleep(0.5);  
 	    send(newsocket,temp->ip_addr,strlen(temp->ip_addr),0);        //send port number 
+		sleep(0.5);  
 	    send(newsocket,temp->port,strlen(temp->port),0);  //send IP address
+		sleep(0.5);  
 	}
 	else if(check_prefix(in_buff,"add")==0)
 	{
 	    struct node *temp = (struct node*)malloc(sizeof(struct node));
 	    
 	    recv(newsocket,temp->handle,sizeof(temp->handle),0);            //receive handle
+
+	    printf("handle :%s\n",temp->handle); 
+
 	    recv(newsocket,temp->ip_addr,sizeof(temp->ip_addr),0);            //receive port number
     	recv(newsocket,temp->port,sizeof(temp->port),0);            //receive IP address
 
         insert_replace(temp);
+        printf("table size after insert: %d\n",table_size); 
 	}
 	else
 	{
-    strcpy(out_buff,"ERROR: Request Format not recognizible"); 
-    send(newsocket,out_buff,strlen(out_buff),0);
-	}	
+	    strcpy(out_buff,"ERROR: Request Format not recognizible"); 
+	    send(newsocket,out_buff,strlen(out_buff),0);
+	}
+	pthread_exit(0); 	
 }
 
 int main(int argc,char* argv[]){
@@ -144,18 +161,14 @@ int main(int argc,char* argv[]){
 	while(1){
 		cli_size = sizeof cliAddr;
 		newsocket = accept(socketfd,(struct sockaddr*)&cliAddr,&cli_size);
-		int pid = fork();
-		if(pid==0){
+		//int pid = fork();
+		//if(pid==0)
 			pthread_t thread_read,thread_write;
 //			pthread_create(&thread_read,NULL,readsock,(void*)&newsocket);
 			pthread_create(&thread_write,NULL,server_sock,(void*)&newsocket);
 //			pthread_detach(thread_read);
 			pthread_detach(thread_write);
-			break;
-		}
-		else{
-			close(newsocket);
-		}
+		
 	}
 	pthread_exit(0);
 }

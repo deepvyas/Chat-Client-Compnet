@@ -49,13 +49,13 @@ void *writesock(void *socket){
 
 void intr_handler(){
 	printf("Please dont kill me\n");
-	/*if(connect(socket_cs,(struct sockaddr*)&cServerAddr,sizeof cServerAddr )<0)
+	if(connect(socket_cs,(struct sockaddr*)&cServerAddr,sizeof cServerAddr )<0)
 	{
 		fprintf(stderr,"CANNOT CONNECT TO CENTRAL CHAT SERVER");
 	}
 	strcpy(out_buff,"sub");
 	send(socket_cs,handle,strlen(handle),0);
-	close(socket_cs);*/
+	close(socket_cs);
 	pthread_exit(0);
 }
 
@@ -81,7 +81,7 @@ int main(int argc,char* argv[]){
 
 	if(connect(socket_cs,(struct sockaddr*)&cServerAddr,sizeof cServerAddr )<0)
 	{
-		fprintf(stderr,"CANNOT CONNECT TO CENTRAL CHAT SERVER");
+		fprintf(stderr,"CANNOT CONNECT TO CENTRAL CHAT SERVER TO SEND CLOSURE..");
 		pthread_exit(0);
 	}
 
@@ -93,8 +93,11 @@ int main(int argc,char* argv[]){
 
 	strcpy(out_buff,"add");
 	send(socket_cs,out_buff,strlen(out_buff),0);
+	sleep(0.5); 
 	send(socket_cs,handle,strlen(handle),0);
+	sleep(0.5); 
 	send(socket_cs,cs_addr,strlen(cs_addr),0);
+	sleep(0.5); 
 	send(socket_cs,argv[1],strlen(argv[1]),0);
 
 	close(socket_cs); 
@@ -117,7 +120,7 @@ int main(int argc,char* argv[]){
 		if(pid==0){
 			printf("\nConnection Request from : %s:%d\n Accept[y/n]?",inet_ntoa(cliAddr.sin_addr),ntohs(cliAddr.sin_port));
 			char opt;
-			scanf("%c",&opt);
+			scanf(" %c",&opt);
 			if(opt!='y'&&opt!='n'){
 				printf("Incorrect option!!\nAccept[y/n]?");
 				while(opt!='y'&&opt!='n'){
