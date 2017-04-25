@@ -47,11 +47,12 @@ int main(int argc,char* argv[]){
 	serverAddr.sin_family = AF_INET;
 	userAddr.sin_family = AF_INET;
 
-	if(argc<3) fprintf(stderr,"No port provided.\n");
+	// if(argc<3) fprintf(stderr,"No port provided.\n");
 
 	serverAddr.sin_port = htons(8000);
 	serverAddr.sin_addr.s_addr= inet_addr("127.0.0.1");
-
+	userAddr.sin_addr.s_addr = inet_addr(argv[1]); 
+	userAddr.sin_port = htons(atoi(argv[2])); 
 	if(connect(socketfd,(struct sockaddr*)&serverAddr,sizeof serverAddr)<0){
 		fprintf(stderr,"CANNOT CONNECT TO CENTRAL CHAT SERVER\n");
 		exit(1);
@@ -72,7 +73,6 @@ int main(int argc,char* argv[]){
 	}
 	else
 	{
-
 		recv(socketfd,user_ip,128*sizeof(char),0);
 		recv(socketfd,user_port,128*sizeof(char),0);
 
@@ -81,18 +81,14 @@ int main(int argc,char* argv[]){
 		// create_connection
 
 		if(connect(socket_p2p,(struct sockaddr*)&userAddr,sizeof userAddr)<0){
-			
 			fprintf(stderr,"CANNOT CONNECT TO REQUESTED CHAT CLIENT\n");
 			exit(1);
-	}	
-
-			pthread_t thread_read,thread_write;
-			pthread_create(&thread_read,NULL,readsock,(void*)&socket_p2p);
-			pthread_create(&thread_write,NULL,writesock,(void*)&socket_p2p);
-			pthread_detach(thread_read);
-			pthread_detach(thread_write);
-
+		}
+		pthread_t thread_read,thread_write;
+		pthread_create(&thread_read,NULL,readsock,(void*)&socket_p2p);
+		pthread_create(&thread_write,NULL,writesock,(void*)&socket_p2p);
+		pthread_detach(thread_read);
+		pthread_detach(thread_write);
 		pthread_exit(0);
-
 	}
 }

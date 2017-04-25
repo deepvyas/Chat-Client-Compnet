@@ -8,13 +8,19 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-
+#include <signal.h>
 char out_buff[1024];
 char in_buff[1024];
 int slave;
 int master;
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 char handle[128];
+
+int socket_cs;
+int socketfd,newsocket;
+struct sockaddr_in serverAddr,cliAddr,cServerAddr;
+
+
 void* readsock(void *socket){
 	int *socketfd;
 	socketfd=(int*)(socket);
@@ -41,11 +47,21 @@ void *writesock(void *socket){
 	}
 }
 
+void intr_handler(){
+	printf("Please dont kill me\n");
+	/*if(connect(socket_cs,(struct sockaddr*)&cServerAddr,sizeof cServerAddr )<0)
+	{
+		fprintf(stderr,"CANNOT CONNECT TO CENTRAL CHAT SERVER");
+	}
+	strcpy(out_buff,"sub");
+	send(socket_cs,handle,strlen(handle),0);
+	close(socket_cs);*/
+	pthread_exit(0);
+}
+
 int main(int argc,char* argv[]){
 	
-	int socket_cs;
-	int socketfd,newsocket;
-	struct sockaddr_in serverAddr,cliAddr,cServerAddr;
+	
 	char interface[] = "wlp3s0";
 	char cs_addr[128];
 
@@ -53,7 +69,7 @@ int main(int argc,char* argv[]){
 	socketfd = socket(PF_INET,SOCK_STREAM,0);
 	memset((char *)&serverAddr,0,sizeof serverAddr);
 	socket_cs = socket(PF_INET,SOCK_STREAM,0);
-	bzero((char *)&cServerAddr,sizeof cServerAddr);
+	memset((char *)&cServerAddr,0,sizeof cServerAddr);
 	cServerAddr.sin_family = AF_INET;
 	serverAddr.sin_family = AF_INET;
 	if(argc<2) fprintf(stderr,"No port provided.\n");
@@ -66,6 +82,7 @@ int main(int argc,char* argv[]){
 	if(connect(socket_cs,(struct sockaddr*)&cServerAddr,sizeof cServerAddr )<0)
 	{
 		fprintf(stderr,"CANNOT CONNECT TO CENTRAL CHAT SERVER");
+		pthread_exit(0);
 	}
 
 	printf("Enter your chat system handle\n");
@@ -86,12 +103,14 @@ int main(int argc,char* argv[]){
 		fprintf(stderr,"Error binding socket.\n");
 		exit(1);
 	}
-	if(listen(socketfd,1)!=0){
+
+	if(listen(socketfd,5)!=0){
 		fprintf(stderr, "Error making socket passive.\n");
 		exit(1);
 	}
 
 	while(1){
+		signal(SIGINT,intr_handler);
 		cli_size = sizeof cliAddr;
 		newsocket = accept(socketfd,(struct sockaddr*)&cliAddr,&cli_size);
 		int pid = fork();
@@ -147,6 +166,5 @@ int main(int argc,char* argv[]){
 			close(newsocket);
 		}
 	}
-
 	pthread_exit(0);
 }

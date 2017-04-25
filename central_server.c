@@ -93,10 +93,10 @@ void *server_sock(void *socket){
 	    if(temp == NULL)
 	    {
 	    	strcpy(out_buff,"0");								//status code
-	        send(newsocket,out_buff,strlen(out_buff),0);
-	        strcpy(out_buff,"USER WITH GIVEN HANDLE NOT CURRENTLY ONLINE");
-	        send(newsocket,out_buff,strlen(out_buff),0);
-	        return NULL;
+        send(newsocket,out_buff,strlen(out_buff),0);
+        strcpy(out_buff,"USER WITH GIVEN HANDLE NOT CURRENTLY ONLINE");
+        send(newsocket,out_buff,strlen(out_buff),0);
+        return NULL;
 	    }
 
 	    strcpy(out_buff,"1");									//status code 
@@ -117,13 +117,10 @@ void *server_sock(void *socket){
 	}
 	else
 	{
-	    strcpy(out_buff,"ERROR: Request Format not recognizible"); 
-	    send(newsocket,out_buff,strlen(out_buff),0);
-	}
-	
-	
+    strcpy(out_buff,"ERROR: Request Format not recognizible"); 
+    send(newsocket,out_buff,strlen(out_buff),0);
+	}	
 }
-
 
 int main(int argc,char* argv[]){
 	int socketfd,newsocket;
